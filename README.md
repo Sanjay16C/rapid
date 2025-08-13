@@ -29,10 +29,11 @@ Tech Stack:
 
 Backend:
 
-		•	Python 3.10+
-		•	FastAPI
-		•	Uvicorn
-		•	Pymongo
+	•	Python 3.10+
+	•	FastAPI
+	•	Uvicorn
+	•	Pymongo
+		
 
 Middleware:
 
@@ -41,11 +42,11 @@ Middleware:
 Frontend:
 
 	•	React.js
-	•	Axios (API calls)
+	•	Axios 
 
 Database:
 
-	•	MongoDB (via MongoDB Compass)
+	•	MongoDB 
 
 Folder structure
 
@@ -88,7 +89,7 @@ Installation & Setup
 3. Make sure your mongo url looks like this or according to yours:
    
         MONGO_URI=mongodb://localhost:27017
-        DB_NAME=train_db1
+        DB_NAME=train_db
 
 5. Run dataset insertion script:
 
