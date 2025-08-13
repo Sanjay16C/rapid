@@ -59,7 +59,7 @@ function App() {
     }
   };
 
-  // Handle sorting
+  // Sorting logic
   const sortedTrains = [...trains].sort((a, b) => {
     if (sortBy === "price") return a.price - b.price;
     if (sortBy === "time") return a.start.localeCompare(b.start);
@@ -81,10 +81,7 @@ function App() {
           ))}
         </select>
 
-        <select
-          value={destination}
-          onChange={(e) => setDestination(e.target.value)}
-        >
+        <select value={destination} onChange={(e) => setDestination(e.target.value)}>
           <option value="">Select Destination</option>
           {destinations.map((st, idx) => (
             <option key={idx} value={st}>
@@ -113,19 +110,26 @@ function App() {
         {sortedTrains.length > 0 ? (
           sortedTrains.map((train, idx) => (
             <div key={idx} className="train-card">
-              <h3>{train.trainName}</h3>
-              <p>
-                <strong>Departure:</strong> {train.start}
-              </p>
-              <p>
-                <strong>Arrival:</strong> {train.end}
-              </p>
-              <p>
-                <strong>Distance:</strong> {train.distance} km
-              </p>
-              <p>
-                <strong>Price:</strong> ₹{train.price.toFixed(2)}
-              </p>
+              <h3>
+                {train.trainName || `${train.firstTrain} ➜ ${train.secondTrain}`}
+              </h3>
+              <p><strong>Departure:</strong> {train.start}</p>
+              <p><strong>Arrival:</strong> {train.end}</p>
+              <p><strong>Distance:</strong> {train.distance} km</p>
+              <p><strong>Price:</strong> ₹{train.price.toFixed(2)}</p>
+
+              {/* Show routes */}
+              {train.type === "direct" && train.route && (
+                <p><strong>Route:</strong> {train.route.join(" → ")}</p>
+              )}
+
+              {train.type === "connecting" && train.route && Array.isArray(train.route) && (
+                <div>
+                  <p><strong>First Leg ({train.firstTrain}):</strong> {train.route[0].join(" → ")}</p>
+                  <p><strong>Second Leg ({train.secondTrain}):</strong> {train.route[1].join(" → ")}</p>
+                  <p><strong>Hub Station:</strong> {train.hub}</p>
+                </div>
+              )}
             </div>
           ))
         ) : (

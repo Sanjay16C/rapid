@@ -1,8 +1,7 @@
-
+# backend/generate_trains_graph.py
 import random
 from datetime import datetime, timedelta
 from pymongo import MongoClient, ASCENDING
-from collections import defaultdict
 
 MONGO_URI = "mongodb://localhost:27017/"
 DB_NAME = "train_db"
@@ -12,57 +11,84 @@ STATIONS_COLLECTION = "stations"
 NUM_TRAINS = 1000
 RANDOM_SEED = 42
 
-CUSTOM_TRAIN_NAMES = []  
+# ----------------------------
+# Rail graph (approx distances, km)
+# Only these links are allowed when building routes
+# ----------------------------
+EDGES = {
+    # North ↔ West corridor
+    ("Delhi", "Jaipur"): 280,
+    ("Jaipur", "Ahmedabad"): 650,
+    ("Ahmedabad", "Vadodara"): 110,
+    ("Vadodara", "Surat"): 130,
+    ("Surat", "Thane"): 260,
+    ("Thane", "Mumbai"): 25,
+    ("Mumbai", "Pune"): 150,
+    ("Ahmedabad", "Rajkot"): 215,
 
-STATIONS = [
-    "Delhi", "Agra", "Jaipur", "Lucknow", "Varanasi", "Patna", "Kolkata",
-    "Ranchi", "Bhubaneswar", "Visakhapatnam",
-    "Mumbai", "Thane", "Pune", "Surat", "Vadodara", "Ahmedabad", "Rajkot",
-    "Nagpur", "Bhopal", "Indore",
-    "Hyderabad", "Vijayawada",
-    "Bangalore", "Mysuru", "Mangalore", "Hubli", "Belagavi",
-    "Chennai", "Tirupati", "Vellore", "Coimbatore", "Salem", "Erode", "Trichy", "Madurai",
-    "Kochi", "Thrissur", "Calicut", "Trivandrum",
-]
+    # North ↔ East corridor
+    ("Delhi", "Agra"): 210,
+    ("Agra", "Lucknow"): 330,
+    ("Lucknow", "Varanasi"): 300,
+    ("Varanasi", "Patna"): 230,
+    ("Patna", "Kolkata"): 560,
 
-CORRIDORS = [
-    # North–West–West Coast
-    ["Delhi", "Jaipur", "Ahmedabad", "Surat", "Mumbai", "Thane", "Pune"],
-    # North–Central–West
-    ["Delhi", "Agra", "Gwalior", "Bhopal", "Indore", "Vadodara", "Ahmedabad"],
-    # North–East
-    ["Delhi", "Agra", "Lucknow", "Varanasi", "Patna", "Kolkata"],
-    # East Coast (North → South)
-    ["Kolkata", "Bhubaneswar", "Visakhapatnam", "Vijayawada", "Chennai", "Tirupati"],
-    # South Spine (West Coast ↔ South TN/Kerala)
-    ["Mangalore", "Mysuru", "Bangalore", "Salem", "Erode", "Coimbatore", "Trichy", "Madurai", "Tirupati", "Chennai"],
-    # Konkan & West Coast
-    ["Mumbai", "Thane", "Surat", "Vadodara", "Ahmedabad", "Rajkot"],
-    # Deccan
-    ["Nagpur", "Bhopal", "Indore", "Vadodara", "Surat", "Mumbai"],
-    # Hyderabad connectors
-    ["Hyderabad", "Vijayawada", "Chennai", "Tirupati"],
-    ["Hyderabad", "Nagpur", "Bhopal", "Indore"],
-    # Karnataka–Goa–Konkan-ish
-    ["Belagavi", "Hubli", "Bangalore", "Mysuru", "Mangalore"],
-]
+    # East coast corridor (Kolkata → Chennai)
+    ("Kolkata", "Bhubaneswar"): 440,
+    ("Bhubaneswar", "Visakhapatnam"): 440,
+    ("Visakhapatnam", "Vijayawada"): 350,
+    ("Vijayawada", "Chennai"): 455,
+    ("Chennai", "Tirupati"): 135,
 
-# Probability to pick a corridor vs a random path
-PICK_CORRIDOR_PROB = 0.75
-MIN_STOPS = 4
-MAX_STOPS = 8
+    # South spine (West coast ↔ TN)
+    ("Mangalore", "Mysuru"): 255,
+    ("Mysuru", "Bangalore"): 145,
+    ("Bangalore", "Salem"): 200,
+    ("Salem", "Erode"): 55,
+    ("Erode", "Coimbatore"): 100,
+    ("Coimbatore", "Trichy"): 210,
+    ("Trichy", "Madurai"): 140,
+    ("Tirupati", "Chennai"): 135,  # duplicate reverse for convenience
 
-# Segment distance/time ranges
-MIN_SEG_KM = 50
-MAX_SEG_KM = 300
-MIN_SEG_MIN = 60
-MAX_SEG_MIN = 240
+    # Konkan / West coast extension
+    ("Mangalore", "Calicut"): 230,
+    ("Calicut", "Thrissur"): 110,
+    ("Thrissur", "Kochi"): 80,
+    ("Kochi", "Trivandrum"): 220,
 
-# First departure window (start of the route)
-START_HOUR_MIN = 5   # 05:00
-START_HOUR_MAX = 18  # up to 18:00 so longer trains still finish same day
+    # Deccan + connectors
+    ("Nagpur", "Bhopal"): 350,
+    ("Bhopal", "Indore"): 190,
+    ("Indore", "Vadodara"): 330,
+    ("Nagpur", "Hyderabad"): 500,
+    ("Hyderabad", "Vijayawada"): 300,
+
+    # Some sensible southern crosslinks
+    ("Bangalore", "Mangalore"): 420,
+    ("Bangalore", "Coimbatore"): 365,
+    ("Chennai", "Salem"): 340,
+    ("Chennai", "Vellore"): 140,
+    ("Vellore", "Bangalore"): 210,
+}
+
+# Make undirected adjacency
+from collections import defaultdict, deque
+
+GRAPH = defaultdict(dict)
+for (a, b), d in EDGES.items():
+    GRAPH[a][b] = d
+    GRAPH[b][a] = d
+
+# Stations set
+STATIONS = sorted(GRAPH.keys())
+
+# Speeds & dwell
+AVG_SPEED_KMPH = 55  # average run speed
+DWELL_MIN = (2, 8)   # dwell time at each intermediate stop [min,min]
+
+START_HOUR_MIN = 5
+START_HOUR_MAX = 18
 START_MINUTE_CHOICES = [0, 10, 20, 30, 40, 50]
-
 
 ADJECTIVES = [
     "Viper", "Crimson", "Golden", "Silver", "Emerald", "Sapphire", "Ruby",
@@ -74,69 +100,62 @@ NOUNS = [
     "Superfast", "Intercity", "Rajdhani", "Garib Rath", "Vande Bharat"
 ]
 
-def generate_train_name(i, used_names):
-    if CUSTOM_TRAIN_NAMES:
-        name = CUSTOM_TRAIN_NAMES[i % len(CUSTOM_TRAIN_NAMES)]
-        if name in used_names:
-            suffix = 2
-            while f"{name} {suffix}" in used_names:
-                suffix += 1
-            name = f"{name} {suffix}"
-        used_names.add(name)
-        return name
-
-   
-    attempt = 0
-    while True:
-        adj = random.choice(ADJECTIVES)
-        noun = random.choice(NOUNS)
-        name = f"{adj} {noun}"
-        if name not in used_names:
-            used_names.add(name)
+def generate_train_name(i, used):
+    # Nice, readable names with de-duplication
+    for _ in range(10):
+        name = f"{random.choice(ADJECTIVES)} {random.choice(NOUNS)}"
+        if name not in used:
+            used.add(name)
             return name
-        attempt += 1
-        if attempt > 5:
-            numbered = f"{name} {random.randint(2, 999)}"
-            if numbered not in used_names:
-                used_names.add(numbered)
-                return numbered
+    # fallback with a suffix
+    suffix = 2
+    while f"{name} {suffix}" in used:
+        suffix += 1
+    name2 = f"{name} {suffix}"
+    used.add(name2)
+    return name2
 
 def random_start_time():
     hour = random.randint(START_HOUR_MIN, START_HOUR_MAX)
     minute = random.choice(START_MINUTE_CHOICES)
-    return datetime(2000, 1, 1, hour, minute)  # fixed date, only time is relevant
+    return datetime(2000, 1, 1, hour, minute)
 
-def build_route_from_corridor():
-    corridor = random.choice(CORRIDORS)
-    if len(corridor) < MIN_STOPS:
-        length = len(corridor)
-        start_idx = 0
-        end_idx = length
-    else:
-        length = random.randint(MIN_STOPS, min(MAX_STOPS, len(corridor)))
-        start_idx = random.randint(0, len(corridor) - length)
-        end_idx = start_idx + length
-    return corridor[start_idx:end_idx]
+def random_walk_path(start, min_len=4, max_len=8):
+    """Build a simple path (no repeats) by walking neighbors."""
+    target_len = random.randint(min_len, max_len)
+    path = [start]
+    visited = {start}
+    current = start
 
-def build_route_random():
-    length = random.randint(MIN_STOPS, min(MAX_STOPS, len(STATIONS)))
-    route = random.sample(STATIONS, length)
-    route.sort()
-    return route
+    while len(path) < target_len:
+        neighbors = [n for n in GRAPH[current].keys() if n not in visited]
+        if not neighbors:
+            break
+        nxt = random.choice(neighbors)
+        path.append(nxt)
+        visited.add(nxt)
+        current = nxt
+    return path if len(path) >= min_len else None
 
-def build_train_stops(route):
-    current = random_start_time()
+def build_train_stops_from_path(path):
+    """Create stops with per-segment distances and times from the given node path."""
+    t = random_start_time()
     stops = []
-    for i, station in enumerate(route):
-        distance = 0 if i == 0 else random.randint(MIN_SEG_KM, MAX_SEG_KM)
+    for i, station in enumerate(path):
+        if i == 0:
+            seg_km = 0
+        else:
+            seg_km = GRAPH[path[i-1]][path[i]]
         stops.append({
             "station": station,
-            "distance": distance,         
-            "departure": current.strftime("%H:%M"),
+            "distance": seg_km,  # distance from previous station
+            "departure": t.strftime("%H:%M"),
         })
-        # Advance time for next segment
-        seg_minutes = random.randint(MIN_SEG_MIN, MAX_SEG_MIN)
-        current += timedelta(minutes=seg_minutes)
+        if i < len(path) - 1:
+            # run time + dwell at arrival
+            run_minutes = int(round(seg_km / AVG_SPEED_KMPH * 60))
+            dwell = random.randint(*DWELL_MIN)
+            t = t + timedelta(minutes=run_minutes + dwell)
     return stops
 
 def generate_trains(n=NUM_TRAINS):
@@ -147,7 +166,7 @@ def generate_trains(n=NUM_TRAINS):
     trains_col = db[TRAINS_COLLECTION]
     stations_col = db[STATIONS_COLLECTION]
 
-    # Clean old data (comment these two lines if you want to append instead)
+    # Reset (comment if appending is desired)
     trains_col.delete_many({})
     stations_col.delete_many({})
 
@@ -155,44 +174,36 @@ def generate_trains(n=NUM_TRAINS):
     docs = []
 
     for i in range(n):
-        if random.random() < PICK_CORRIDOR_PROB:
-            route = build_route_from_corridor()
-        else:
-            route = build_route_random()
+        start = random.choice(STATIONS)
+        path = None
+        # Try a few times to get a decent walk
+        for _ in range(8):
+            path_try = random_walk_path(start, min_len=4, max_len=8)
+            if path_try:
+                path = path_try
+                break
+        if not path:
+            continue
 
-        # Ensure route has unique stations (it should already) and length >= MIN_STOPS
-        route = list(dict.fromkeys(route))  # preserve order, drop dupes
-        if len(route) < MIN_STOPS:
-            # If too short due to dupes, top up from stations not in route
-            candidates = [s for s in STATIONS if s not in route]
-            random.shuffle(candidates)
-            needed = MIN_STOPS - len(route)
-            route.extend(candidates[:needed])
-
-        stops = build_train_stops(route)
+        stops = build_train_stops_from_path(path)
         train_name = generate_train_name(i, used_names)
         docs.append({"train_name": train_name, "stops": stops})
 
     if docs:
         trains_col.insert_many(docs)
 
-    # Build stations collection (for dropdowns)
-    station_set = set()
-    for d in docs:
-        for st in d["stops"]:
-            station_set.add(st["station"])
-    stations_doc = [{"name": s} for s in sorted(station_set)]
+    # stations collection for dropdowns
+    stations_doc = [{"name": s} for s in sorted(STATIONS)]
     if stations_doc:
         stations_col.insert_many(stations_doc)
         stations_col.create_index([("name", ASCENDING)], unique=True)
 
-    # Helpful indexes for performance
+    # helpful indexes
     trains_col.create_index([("stops.station", ASCENDING)])
     trains_col.create_index([("train_name", ASCENDING)], unique=True)
 
     print(f"Inserted {len(docs)} trains into '{DB_NAME}.{TRAINS_COLLECTION}'.")
     print(f"Inserted {len(stations_doc)} stations into '{DB_NAME}.{STATIONS_COLLECTION}'.")
-
 
 if __name__ == "__main__":
     generate_trains(NUM_TRAINS)
