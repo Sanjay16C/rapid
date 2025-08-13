@@ -2,52 +2,61 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 
 function App() {
-  const [stations, setStations] = useState([]);
+  const [sources, setSources] = useState([]);
+  const [destinations, setDestinations] = useState([]);
   const [source, setSource] = useState("");
   const [destination, setDestination] = useState("");
   const [trains, setTrains] = useState([]);
   const [sortBy, setSortBy] = useState("");
 
-  // Mock: Fetch stations from backend
+  // Fetch source stations from backend
   useEffect(() => {
-    // Replace with: fetch("/api/stations").then(...)
-    setStations([
-      "Chennai",
-      "Vellore",
-      "Bangalore",
-      "Mysuru",
-      "Mangalore",
-      "Shimoga",
-    ]);
+    const fetchSources = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/sources");
+        const data = await res.json();
+        setSources(data.sources || []);
+      } catch (error) {
+        console.error("Error fetching sources:", error);
+      }
+    };
+    fetchSources();
   }, []);
 
-  // Handle search
-  const searchTrains = () => {
+  // Fetch destination stations when source changes
+  useEffect(() => {
+    const fetchDestinations = async () => {
+      if (!source) {
+        setDestinations([]);
+        return;
+      }
+      try {
+        const res = await fetch(`http://localhost:8000/destinations?source=${source}`);
+        const data = await res.json();
+        setDestinations(data.destinations || []);
+      } catch (error) {
+        console.error("Error fetching destinations:", error);
+      }
+    };
+    fetchDestinations();
+  }, [source]);
+
+  // Search trains from backend
+  const searchTrains = async () => {
     if (!source || !destination) {
       alert("Please select both source and destination");
       return;
     }
 
-    // Mock API data
-    // Replace with real fetch(`/api/trains?source=${source}&destination=${destination}`)
-    const mockData = [
-      {
-        trainName: "Train A",
-        start: "15:30",
-        end: "21:45",
-        distance: 420,
-        price: 420 * 1.25,
-      },
-      {
-        trainName: "Train B",
-        start: "09:00",
-        end: "17:30",
-        distance: 430,
-        price: 430 * 1.25,
-      },
-    ];
-
-    setTrains(mockData);
+    try {
+      const res = await fetch(
+        `http://localhost:8000/trains?source=${source}&destination=${destination}`
+      );
+      const data = await res.json();
+      setTrains(data.trains || []);
+    } catch (error) {
+      console.error("Error fetching trains:", error);
+    }
   };
 
   // Handle sorting
@@ -65,7 +74,7 @@ function App() {
       <div className="dropdowns">
         <select value={source} onChange={(e) => setSource(e.target.value)}>
           <option value="">Select Source</option>
-          {stations.map((st, idx) => (
+          {sources.map((st, idx) => (
             <option key={idx} value={st}>
               {st}
             </option>
@@ -77,7 +86,7 @@ function App() {
           onChange={(e) => setDestination(e.target.value)}
         >
           <option value="">Select Destination</option>
-          {stations.map((st, idx) => (
+          {destinations.map((st, idx) => (
             <option key={idx} value={st}>
               {st}
             </option>
