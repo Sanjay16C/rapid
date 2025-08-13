@@ -11,16 +11,18 @@ prices and timings for the entered route.
 
 
 Requirements:
+
 The train search application should meet the following requirements:
-• Allow users to select source and destination stations from a dropdown menu
-• Display a clear and concise list of available trains, including information on
-train name, departure and arrival times, and ticket prices for the entered route.
-• Allow users to sort the list of trains based on price
-• Price should be determined based on distance of the journey (Rs 1.25/km).
-• Be scalable and able to handle a large number of stations and train routes
-• Be user-friendly and easy to navigate
-• For ease of testing, develop a test data generation script, that generates 1000
-trains and thier routes in your application db.
+
+	• Allow users to select source and destination stations from a dropdown menu
+	• Display a clear and concise list of available trains, including information on
+	train name, departure and arrival times, and ticket prices for the entered route.
+	• Allow users to sort the list of trains based on price
+	• Price should be determined based on distance of the journey (Rs 1.25/km).
+	• Be scalable and able to handle a large number of stations and train routes
+	• Be user-friendly and easy to navigate
+	• For ease of testing, develop a test data generation script, that generates 1000
+	trains and thier routes in your application db.
 
 
 Tech Stack:
@@ -84,19 +86,20 @@ Installation & Setup
         pip install -r requirements.txt
 
 3. Make sure your mongo url looks like this or according to yours:
+   
         MONGO_URI=mongodb://localhost:27017
         DB_NAME=train_db1
 
-4. Run dataset insertion script:
+5. Run dataset insertion script:
 
        python dataset.py
 
-5. Run FastAPI server:
+6. Run FastAPI server:
 
        uvicorn main:app --reload
 
 
-6. Frontend Setup
+7. Frontend Setup
 
         cd ../frontend
         npm install
