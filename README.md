@@ -1,6 +1,6 @@
-A Train Search Web Application
+Train Search Web Application
 
-
+A full-stack web application to search trains between stations, powered by FastAPI, MongoDB, and React.js.
 
 Problem Statement:
 The task is to develop a train search application that allows users to select source and
@@ -26,36 +26,42 @@ trains and thier routes in your application db.
 Tech Stack:
 
 Backend:
-	•	Python 3.10+
-	•	FastAPI
-	•	Uvicorn
-	•	Pymongo
+
+		•	Python 3.10+
+		•	FastAPI
+		•	Uvicorn
+		•	Pymongo
 
 Middleware:
-  •	CORS
+
+	  •	CORS
   
 Frontend:
+
 	•	React.js
 	•	Axios (API calls)
 
 Database:
+
 	•	MongoDB (via MongoDB Compass)
 
-rapid/
-│
-├── backend/
-│   ├── main.py         # FastAPI app entry point
-│   ├── dataset.py      # Script to insert sample data
-│   └── requirements.txt
-│
-├── rapid/              #Frontend
-│   ├── src/
-│   │   ├── App.js
-│   │   ├── App.css
-│   │   └── ...
-│   └── package.json
-│
-└── README.md
+Folder structure
+
+	rapid/
+	│
+	├── backend/
+	│   ├── main.py         # FastAPI app entry point
+	│   ├── dataset.py      # Script to insert sample data
+	│   └── requirements.txt
+	│
+	├── rapid/              #Frontend
+	│   ├── src/
+	│   │   ├── App.js
+	│   │   ├── App.css
+	│   │   └── ...
+	│   └── package.json
+	│
+	└── README.md
 
 
 Installation & Setup
@@ -231,6 +237,8 @@ Example Response (Connecting Train):
     }
   ]
 }
+
+
 
 
 
