@@ -96,8 +96,6 @@ Installation & Setup
         npm install
         npm start
 
-Alright — based on your FastAPI code, here’s the API Endpoints section rewritten so it matches exactly what your backend actually serves.
-
 
 
 📡 API Endpoints
