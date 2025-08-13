@@ -2,6 +2,10 @@ Train Search Web Application
 
 A full-stack web application to search trains between stations, powered by FastAPI, MongoDB, and React.js.
 
+Demo Video:
+	
+	https://drive.google.com/drive/folders/10bl7H1BL212mjIxkkLi-z2SEy71jYyfY?usp=sharing
+
 Problem Statement:
 The task is to develop a train search application that allows users to select source and
 destination stations from the available options and view a list of trains that operate
