@@ -121,14 +121,14 @@ Returns the list of all stations present in the database.
 
 Example Response:
 
-{
-  "stations": [
-    "Delhi",
-    "Mumbai",
-    "Chennai",
-    "Kolkata"
-  ]
-}
+	{
+	  "stations": [
+	    "Delhi",
+	    "Mumbai",
+	    "Chennai",
+	    "Kolkata"
+	  ]
+	}
 
 
 
@@ -144,14 +144,14 @@ Returns all stations that can be the starting station of a train.
 
 Example Response:
 
-{
-  "sources": [
-    "Delhi",
-    "Mumbai",
-    "Bangalore",
-    "Hyderabad"
-  ]
-}
+	{
+	  "sources": [
+	    "Delhi",
+	    "Mumbai",
+	    "Bangalore",
+	    "Hyderabad"
+	  ]
+	}
 
 
 
@@ -171,13 +171,13 @@ GET /destinations?source=Delhi
 
 Example Response:
 
-{
-  "destinations": [
-    "Mumbai",
-    "Jaipur",
-    "Lucknow"
-  ]
-}
+	{
+	  "destinations": [
+	    "Mumbai",
+	    "Jaipur",
+	    "Lucknow"
+	  ]
+	}
 
 
 
@@ -200,43 +200,43 @@ GET /trains?source=Delhi&destination=Mumbai
 
 Example Response (Direct Train):
 
-{
-  "trains": [
-    {
-      "type": "direct",
-      "trainName": "Golden Express",
-      "start": "05:00",
-      "end": "14:30",
-      "distance": 1400,
-      "price": 1750.0,
-      "route": ["Delhi", "Jaipur", "Ahmedabad", "Mumbai"]
-    }
-  ]
-}
+	{
+	  "trains": [
+	    {
+	      "type": "direct",
+	      "trainName": "Golden Express",
+	      "start": "05:00",
+	      "end": "14:30",
+	      "distance": 1400,
+	      "price": 1750.0,
+	      "route": ["Delhi", "Jaipur", "Ahmedabad", "Mumbai"]
+	    }
+	  ]
+	}
 
 
 Example Response (Connecting Train):
 
-{
-  "trains": [
-    {
-      "type": "connecting",
-      "firstTrain": "Silver Shatabdi",
-      "secondTrain": "Crimson Express",
-      "hub": "Ahmedabad",
-      "start": "06:30",
-      "hub_arrival": "13:00",
-      "hub_departure": "14:00",
-      "end": "22:15",
-      "distance": 1450,
-      "price": 1812.5,
-      "route": [
-        ["Delhi", "Jaipur", "Ahmedabad"],
-        ["Ahmedabad", "Surat", "Mumbai"]
-      ]
-    }
-  ]
-}
+	{
+	  "trains": [
+	    {
+	      "type": "connecting",
+	      "firstTrain": "Silver Shatabdi",
+	      "secondTrain": "Crimson Express",
+	      "hub": "Ahmedabad",
+	      "start": "06:30",
+	      "hub_arrival": "13:00",
+	      "hub_departure": "14:00",
+	      "end": "22:15",
+	      "distance": 1450,
+	      "price": 1812.5,
+	      "route": [
+	        ["Delhi", "Jaipur", "Ahmedabad"],
+	        ["Ahmedabad", "Surat", "Mumbai"]
+	      ]
+	    }
+	  ]
+	}
 
 
 
